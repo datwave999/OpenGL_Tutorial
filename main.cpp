@@ -26,7 +26,6 @@
 #include"Material.h" 
 
 #include"Model.h"
-#include<assimp/Importer.hpp>
 
 const float toRad = 3.14159265f / 180.0f;
 
@@ -268,52 +267,52 @@ int main() {
 	floorTexture = Texture("Textures/Grass.jpg");
 	floorTexture.LoadTexture();
 
-	// Light: softer directional sunlight
+	// Light: Moderate directional sunlight
 	mainLight = DirectionalLight(2048, 2048,
 								1.0f, 1.0f, 0.95f,
-								0.3f, 0.8f,
+								0.1f, 0.4f,
 								-0.2f, -1.0f, -0.3f);
 
 	// Point Lights: warm and cool fill points
 	// common attenuation: constant, linear, exponent
 	pointLights[0] = PointLight(1024, 1024,
 								0.1f, 50.0f,
-								1.0f, 0.8f, 0.6f,
-								0.05f, 0.9f,
-								4.0f, 1.0f, 0.0f,
-								1.0f, 0.09f, 0.032f);
+								1.0f, 0.7f, 0.3f, 
+								0.05f, 0.6f,      
+								-4.0f, 2.0f, 0.0f,
+								0.3f, 0.1f, 0.01f); 
 
 	pointLightCount++;
 
 	pointLights[1] = PointLight(1024, 1024,
 								0.1f, 50.0f,
-								0.6f, 0.8f, 1.0f,
-								0.05f, 0.9f,
-								-4.0f, 1.0f, 0.0f,
-								1.0f, 0.09f, 0.032f);
+								0.3f, 0.5f, 1.0f, 
+								0.05f, 0.6f,      
+								4.0f, 2.0f, 0.0f, 
+								0.3f, 0.1f, 0.01f); 
 
 	pointLightCount++;
 
-	// Spot Lights: flashlight (attached to camera) and a distant fill spotlight
+	// Spot Lights: flashlight and overhead fill
 	spotLights[0] = SpotLight(1024, 1024,
 							0.1f, 50.0f,
 							1.0f, 1.0f, 0.95f,
-							0.0f, 1.2f,
+							0.0f, 1.0f,       
 							0.0f, 0.0f, 0.0f,
 							0.0f, -1.0f, 0.0f,
 							1.0f, 0.09f, 0.032f,
-							18.0f);
+							20.0f);
 
 	spotLightCount++;
 
 	spotLights[1] = SpotLight(1024, 1024,
 							0.1f, 60.0f,
-							1.0f, 0.95f, 0.9f,
-							0.05f, 0.9f,
-							-8.0f, 1.5f, 0.0f,
-							2.0f, -1.0f, 0.0f,
-							1.0f, 0.09f, 0.032f,
-							25.0f);
+							1.0f, 0.9f, 0.8f, 
+							0.0f, 1.5f,      
+							0.0f, 6.0f, -1.5f,
+							0.0f, -1.0f, 0.0f,
+							0.3f, 0.1f, 0.01f,// Adjusted attenuation
+							30.0f);           // Wider edge
 
 	spotLightCount++;
 
@@ -327,10 +326,6 @@ int main() {
 	spaceShip.LoadModel("Models/Spaceship.obj");
 
 	glm::mat4 projection = glm::perspective(glm::radians(60.0f), mainWindow.getBufferWidth() / mainWindow.getBufferHeight(), 0.1f, 100.0f);
-
-
-	Assimp::Importer importer = Assimp::Importer();
-
 
 
 	// MAIN LOOP
@@ -355,12 +350,15 @@ int main() {
 		camera.keyControl(mainWindow.getKeys(), deltaTime);
 		camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange());
 
-	// Update flashlight (spot light) position/direction from camera before rendering shadow maps
-	glm::vec3 lowerLight = camera.getCameraPosition();
-	lowerLight.y -= 0.4f;
-	spotLights[0].SetFlash(lowerLight, camera.getCameraDirection());
 
-	DirectionalShadowMapPass(&mainLight);
+		// Update flashlight (spot light) position/direction from camera before rendering shadow maps
+		glm::vec3 lowerLight = camera.getCameraPosition();
+		lowerLight.y -= 0.3f; // Lowered further
+		glm::vec3 rightDir = glm::normalize(glm::cross(camera.getCameraDirection(), glm::vec3(0.0f, 1.0f, 0.0f)));
+		lowerLight += rightDir * 0.5f; // Offset to the right
+		spotLights[0].SetFlash(lowerLight, camera.getCameraDirection());
+
+		DirectionalShadowMapPass(&mainLight);
 		for (unsigned int i = 0; i < pointLightCount; i++) {
 			OmniShadowMapPass(&pointLights[i]);
 		}
