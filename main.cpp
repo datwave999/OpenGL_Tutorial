@@ -24,8 +24,8 @@
 #include"PointLight.h"
 #include"SpotLight.h"
 #include"Material.h" 
-
 #include"Model.h"
+#include"Skybox.h"
 
 const float toRad = 3.14159265f / 180.0f;
 
@@ -50,6 +50,8 @@ Texture floorTexture;
 DirectionalLight mainLight;
 PointLight pointLights[MAX_POINT_LIGHTS];
 SpotLight spotLights[MAX_SPOT_LIGHTS];
+
+Skybox skybox;
 
 unsigned int pointLightCount = 0;
 unsigned int spotLightCount = 0;
@@ -211,6 +213,14 @@ void OmniShadowMapPass(PointLight* light) {
 
 void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	
+	glViewport(0, 0, 1920, 1080);
+
+	//Clear window
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	skybox.DrawSkybox(viewMatrix, projectionMatrix);
+
 	shaderList[0]->UseShader();
 
 	uniModel = shaderList[0]->GetModelLocation();
@@ -220,12 +230,6 @@ void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	uniformEyePosition = shaderList[0]->GetEyePositionLocation();
 	uniformSpecularIntensity = shaderList[0]->GetSpecularInstensityLocation();
 	uniformShininess = shaderList[0]->GetShininessLocation();
-
-	glViewport(0, 0, 1920, 1080);
-
-	//Clear window
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUniformMatrix4fv(uniProjection, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(viewMatrix));
@@ -241,9 +245,6 @@ void RenderPass(glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	mainLight.GetShadowMap()->Read(GL_TEXTURE2);
 	shaderList[0]->SetTexture(1);
 	shaderList[0]->SetDirectionalShadowMap(2);
-
-	//Torch
-	// Torch flash already updated before shadow map passes
 
 	RenderScene();
 }
@@ -269,38 +270,38 @@ int main() {
 
 	// Light: Moderate directional sunlight
 	mainLight = DirectionalLight(2048, 2048,
-								1.0f, 1.0f, 0.95f,
-								0.1f, 0.4f,
-								-0.2f, -1.0f, -0.3f);
+								1.0f, 0.8f, 0.3f,
+								0.1f, 0.8f,
+								-10.0f, -12.0f, 19.0f);
 
 	// Point Lights: warm and cool fill points
 	// common attenuation: constant, linear, exponent
 	pointLights[0] = PointLight(1024, 1024,
-								0.1f, 50.0f,
-								1.0f, 0.7f, 0.3f, 
-								0.05f, 0.6f,      
-								-4.0f, 2.0f, 0.0f,
-								0.3f, 0.1f, 0.01f); 
+								0.1f, 100.0f,
+								0.0f, 0.0f, 0.1f,
+								0.0f, 0.6f,      
+								-4.0f, 3.0f, 0.0f,
+								1.0f, 0.2f, 0.01f); 
 
-	pointLightCount++;
+	//pointLightCount++;
 
 	pointLights[1] = PointLight(1024, 1024,
-								0.1f, 50.0f,
-								0.3f, 0.5f, 1.0f, 
+								0.1f, 100.0f,
+								0.1f, 0.0f, 0.0f, 
 								0.05f, 0.6f,      
 								4.0f, 2.0f, 0.0f, 
-								0.3f, 0.1f, 0.01f); 
+								1.0f, 0.1f, 0.01f); 
 
-	pointLightCount++;
+	//pointLightCount++;
 
 	// Spot Lights: flashlight and overhead fill
 	spotLights[0] = SpotLight(1024, 1024,
-							0.1f, 50.0f,
-							1.0f, 1.0f, 0.95f,
+							0.1f, 100.0f,
+							1.0f, 1.0f, 1.0f,
 							0.0f, 1.0f,       
 							0.0f, 0.0f, 0.0f,
 							0.0f, -1.0f, 0.0f,
-							1.0f, 0.09f, 0.032f,
+							1.0f, 0.001f, 0.0032f,
 							20.0f);
 
 	spotLightCount++;
@@ -314,12 +315,23 @@ int main() {
 							0.3f, 0.1f, 0.01f,// Adjusted attenuation
 							30.0f);           // Wider edge
 
-	spotLightCount++;
+	//spotLightCount++;
 
+	//Skybox
+	std::vector<std::string> skyboxFaces;
+
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_rt.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_lf.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_up.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_dn.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_bk.tga");
+	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_ft.tga");
+
+	skybox = Skybox(skyboxFaces);
 
 	//Material
-	shinyMaterial = Material(0.9f, 32);
-	dullMaterial = Material(0.4f, 5);
+	shinyMaterial = Material(0.9f, 64);
+	dullMaterial = Material(0.4f, 16);
 
 	//Model
 	spaceShip = Model();
