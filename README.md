@@ -2,6 +2,14 @@
 
 A 3D graphics engine built from scratch using C++ and OpenGL 3.3. This project demonstrates core graphics programming concepts, including advanced lighting, shadow mapping, and 3D model loading.
 
+## Download
+Download latest build: [Releases Page](https://github.com/datwave999/OpenGL_Tutorial/releases/latest)
+
+### How to Run
+1. Download `.zip` file from link above.
+2. Extract all contents to new folder.
+3. Run `OpenGL_Udemy.exe`.
+
 ## Features
 
 *   **Modern OpenGL**: Uses OpenGL 3.3 Core Profile.
